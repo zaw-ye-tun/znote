@@ -1,78 +1,90 @@
-// Prisma schema for Znote database
-// This defines the database structure for Users, Notes, Tasks, and Ideas
+// Prisma Schema for Znote Application
+// Defines the database structure for Notes, Tasks, Ideas, and Users
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+ // directUrl = env("DIRECT_URL") // Optional: for migrations
 }
 
-// User model - stores authenticated user information
+// User Model
+// Stores user authentication and profile information
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String   // Hashed password using bcryptjs
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String   @id @default(cuid()) // Unique user identifier
+  email     String   @unique // User's email (must be unique)
+  password  String // Hashed password
+  name      String? // Optional display name
+  createdAt DateTime @default(now()) // Account creation timestamp
+  updatedAt DateTime @updatedAt // Last update timestamp
 
-  // Relations: One user has many notes, tasks, and ideas
-  notes     Note[]
-  tasks     Task[]
-  ideas     Idea[]
+  // Relations
+  notes  Note[] // User's notes (one-to-many)
+  tasks  Task[] // User's tasks (one-to-many)
+  ideas  Idea[] // User's ideas (one-to-many)
+
+  @@map("users") // Database table name
 }
 
-// Note model - stores user notes
+// Note Model
+// Stores user notes with color coding and pinning capability
 model Note {
-  id        String   @id @default(uuid())
-  title     String
-  content   String   @db.Text // Use Text for longer content
-  color     String?  @default("#ffffff") // Optional color for note cards
-  isPinned  Boolean  @default(false)
+  id        String   @id @default(cuid())
+  title     String // Note title
+  content   String   @db.Text // Note content (can be large text)
+  color     String   @default("#ffffff") // Background color for UI
+  isPinned  Boolean  @default(false) // Pin important notes to top
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Foreign key to User
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  userId String // Foreign key to User
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId])
+  @@index([userId]) // Index for faster queries
+  @@map("notes")
 }
 
-// Task model - stores user tasks/todos
+// Task Model
+// Stores user tasks/todos with priority and completion status
 model Task {
-  id          String   @id @default(uuid())
-  title       String
-  description String?  @db.Text
-  completed   Boolean  @default(false)
-  priority    String?  @default("medium") // low, medium, high
-  dueDate     DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id          String    @id @default(cuid())
+  title       String // Task title/description
+  completed   Boolean   @default(false) // Completion status
+  priority    String    @default("medium") // Priority: low, medium, high
+  dueDate     DateTime? // Optional due date
+  description String?   @db.Text // Optional detailed description
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  // Foreign key to User
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([completed]) // Index for filtering completed/incomplete tasks
+  @@map("tasks")
 }
 
-// Idea model - stores user ideas in the "Idea Vault"
+// Idea Model
+// Stores user ideas with categorization and tagging
 model Idea {
-  id          String   @id @default(uuid())
-  title       String
-  description String   @db.Text
-  category    String?  @default("general") // To organize ideas by category
-  tags        String[] // Array of tags for better searchability
+  id          String   @id @default(cuid())
+  title       String // Idea title
+  description String   @db.Text // Detailed idea description
+  category    String   @default("general") // Category: work, personal, creative, etc.
+  tags        String[] // Array of tags for flexible organization
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Foreign key to User
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+  @@index([category]) // Index for filtering by category
+  @@map("ideas")
 }
