@@ -8,7 +8,7 @@ import axios from 'axios';
  */
 
 // Get API URL from environment variable
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://znote-f78.onrender.com/api';
 
 // Create axios instance with base configuration
 const api = axios.create({
