@@ -1,0 +1,78 @@
+// Prisma schema for Znote database
+// This defines the database structure for Users, Notes, Tasks, and Ideas
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - stores authenticated user information
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // Hashed password using bcryptjs
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations: One user has many notes, tasks, and ideas
+  notes     Note[]
+  tasks     Task[]
+  ideas     Idea[]
+}
+
+// Note model - stores user notes
+model Note {
+  id        String   @id @default(uuid())
+  title     String
+  content   String   @db.Text // Use Text for longer content
+  color     String?  @default("#ffffff") // Optional color for note cards
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Foreign key to User
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Task model - stores user tasks/todos
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?  @db.Text
+  completed   Boolean  @default(false)
+  priority    String?  @default("medium") // low, medium, high
+  dueDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key to User
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// Idea model - stores user ideas in the "Idea Vault"
+model Idea {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+  category    String?  @default("general") // To organize ideas by category
+  tags        String[] // Array of tags for better searchability
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Foreign key to User
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
